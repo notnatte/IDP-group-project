@@ -39,7 +39,7 @@ const CoursesTab = ({ userRole }: { userRole: string }) => {
 
   const fetchCourses = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('courses')
         .select(`
           *,
@@ -65,7 +65,7 @@ const CoursesTab = ({ userRole }: { userRole: string }) => {
     if (!newCourse.title || !newCourse.price || !newCourse.description || !user) return;
     
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('courses')
         .insert({
           title: newCourse.title,
@@ -100,7 +100,7 @@ const CoursesTab = ({ userRole }: { userRole: string }) => {
       const course = courses.find(c => c.id === courseId);
       if (!course) return;
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('payments')
         .insert({
           user_id: user.id,

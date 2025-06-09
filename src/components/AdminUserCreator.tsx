@@ -10,12 +10,17 @@ const AdminUserCreator = () => {
     const createAdminUser = async () => {
       try {
         // Check if admin user already exists
-        const { data: existingUsers } = await supabase.auth.admin.listUsers();
-        const adminExists = existingUsers?.users?.find(user => user.email === 'admin@gmail.com');
+        const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
         
-        if (adminExists) {
-          console.log('Admin user already exists');
-          return;
+        if (listError) {
+          console.log('Cannot check existing users (normal in development)');
+        } else {
+          const adminExists = existingUsers?.users?.find((user: any) => user.email === 'admin@gmail.com');
+          
+          if (adminExists) {
+            console.log('Admin user already exists');
+            return;
+          }
         }
 
         // Create admin user
@@ -34,7 +39,7 @@ const AdminUserCreator = () => {
 
         if (data.user) {
           // Update the user's role to admin
-          const { error: updateError } = await supabase
+          const { error: updateError } = await (supabase as any)
             .from('profiles')
             .update({ role: 'admin' })
             .eq('id', data.user.id);

@@ -41,13 +41,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           // Fetch user profile to get role
           setTimeout(async () => {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .single();
-            
-            setUserRole(profile?.role || 'user');
+            try {
+              const { data: profile } = await (supabase as any)
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+              
+              setUserRole(profile?.role || 'user');
+            } catch (error) {
+              console.error('Error fetching user role:', error);
+              setUserRole('user');
+            }
           }, 0);
         } else {
           setUserRole(null);
@@ -82,10 +87,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (data.user) {
         // Update the user's role in the profiles table
-        await supabase
-          .from('profiles')
-          .update({ role })
-          .eq('id', data.user.id);
+        try {
+          await (supabase as any)
+            .from('profiles')
+            .update({ role })
+            .eq('id', data.user.id);
+        } catch (updateError) {
+          console.error('Error updating user role:', updateError);
+        }
 
         toast({
           title: "Account created successfully!",

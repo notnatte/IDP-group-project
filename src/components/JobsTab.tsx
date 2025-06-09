@@ -46,7 +46,7 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
 
   const fetchJobs = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('jobs')
         .select('*')
         .order('created_at', { ascending: false });
@@ -69,7 +69,7 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('job_applications')
         .select('*')
         .eq('user_id', user.id);
@@ -85,7 +85,7 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
     if (!newJob.title || !newJob.location || !newJob.requirements || !user) return;
     
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('jobs')
         .insert({
           title: newJob.title,
@@ -117,7 +117,7 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('job_applications')
         .insert({
           user_id: user.id,

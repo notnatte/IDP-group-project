@@ -42,7 +42,7 @@ const PaymentsTab = ({ userRole }: { userRole: string }) => {
     if (!user) return;
 
     try {
-      let query = supabase
+      let query = (supabase as any)
         .from('payments')
         .select(`
           *,
@@ -78,7 +78,7 @@ const PaymentsTab = ({ userRole }: { userRole: string }) => {
     try {
       // In a real app, you would upload the file to Supabase Storage
       // For now, we'll just update the payment status
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('payments')
         .update({
           status: 'pending',
@@ -108,7 +108,7 @@ const PaymentsTab = ({ userRole }: { userRole: string }) => {
 
   const handleApprovePayment = async (paymentId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('payments')
         .update({ status: 'approved' })
         .eq('id', paymentId);
@@ -133,7 +133,7 @@ const PaymentsTab = ({ userRole }: { userRole: string }) => {
 
   const handleRejectPayment = async (paymentId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('payments')
         .update({ status: 'rejected' })
         .eq('id', paymentId);
