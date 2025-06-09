@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -212,11 +211,7 @@ const WelcomePage = ({ userRole, onLogout }: {
 
   const getAvailableTabs = () => {
     const baseTabs = ["courses", "jobs"];
-    if (userRole === 'admin') {
-      baseTabs.push("payments");
-    } else if (userRole !== 'admin') {
-      baseTabs.push("payments");
-    }
+    baseTabs.push("payments");
     return baseTabs;
   };
 
