@@ -15,7 +15,9 @@ export type Database = {
           description: string | null
           id: string
           instructor_id: string | null
+          pdf_storage_path: string | null
           pdf_url: string | null
+          phone_number: string | null
           price: number
           title: string
           updated_at: string | null
@@ -25,7 +27,9 @@ export type Database = {
           description?: string | null
           id?: string
           instructor_id?: string | null
+          pdf_storage_path?: string | null
           pdf_url?: string | null
+          phone_number?: string | null
           price: number
           title: string
           updated_at?: string | null
@@ -35,7 +39,9 @@ export type Database = {
           description?: string | null
           id?: string
           instructor_id?: string | null
+          pdf_storage_path?: string | null
           pdf_url?: string | null
+          phone_number?: string | null
           price?: number
           title?: string
           updated_at?: string | null
@@ -53,6 +59,7 @@ export type Database = {
       job_applications: {
         Row: {
           created_at: string | null
+          cv_storage_path: string | null
           id: string
           job_id: string | null
           status: string
@@ -60,6 +67,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          cv_storage_path?: string | null
           id?: string
           job_id?: string | null
           status?: string
@@ -67,6 +75,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          cv_storage_path?: string | null
           id?: string
           job_id?: string | null
           status?: string
@@ -93,30 +102,36 @@ export type Database = {
         Row: {
           company: string
           created_at: string | null
+          description: string | null
           employer_id: string | null
           id: string
           location: string
           requirements: string
+          salary: string | null
           title: string
           updated_at: string | null
         }
         Insert: {
           company?: string
           created_at?: string | null
+          description?: string | null
           employer_id?: string | null
           id?: string
           location: string
           requirements: string
+          salary?: string | null
           title: string
           updated_at?: string | null
         }
         Update: {
           company?: string
           created_at?: string | null
+          description?: string | null
           employer_id?: string | null
           id?: string
           location?: string
           requirements?: string
+          salary?: string | null
           title?: string
           updated_at?: string | null
         }
@@ -136,6 +151,7 @@ export type Database = {
           course_id: string | null
           created_at: string | null
           id: string
+          receipt_storage_path: string | null
           receipt_url: string | null
           status: string
           updated_at: string | null
@@ -146,6 +162,7 @@ export type Database = {
           course_id?: string | null
           created_at?: string | null
           id?: string
+          receipt_storage_path?: string | null
           receipt_url?: string | null
           status?: string
           updated_at?: string | null
@@ -156,6 +173,7 @@ export type Database = {
           course_id?: string | null
           created_at?: string | null
           id?: string
+          receipt_storage_path?: string | null
           receipt_url?: string | null
           status?: string
           updated_at?: string | null
