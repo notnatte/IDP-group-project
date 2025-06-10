@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, MapPin, DollarSign, FileText, Upload, Download, Building } from "lucide-react";
+import { Briefcase, MapPin, DollarSign, FileText, Upload, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -103,8 +104,7 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
         .from('job_applications')
         .select(`
           *,
-          jobs!inner(employer_id),
-          profiles!job_applications_user_id_fkey(email)
+          jobs!inner(employer_id)
         `)
         .eq('jobs.employer_id', user.id);
 
@@ -156,23 +156,23 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
     }
   };
 
-  const handleApply = async (jobId: string, cv: File) => {
-    if (!user) {
+  const handleApply = async (jobId: string) => {
+    if (!user || !applicationData.cv) {
       toast({
-        title: "Authentication required",
-        description: "Please log in to apply for jobs",
+        title: "Missing CV",
+        description: "Please upload your CV to apply",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      const fileExt = cv.name.split('.').pop();
-      const fileName = `${user.id}/${jobId}/${crypto.randomUUID()}.${fileExt}`;
+      const fileExt = applicationData.cv.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('cvs')
-        .upload(fileName, cv);
+        .upload(fileName, applicationData.cv);
 
       if (uploadError) throw uploadError;
 
@@ -189,9 +189,10 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
 
       toast({
         title: "Application submitted!",
-        description: "Your CV has been uploaded and is pending verification.",
+        description: "Your job application has been submitted successfully.",
       });
 
+      setApplicationData({ jobId: "", cv: null });
       fetchApplications();
     } catch (error) {
       console.error('Error applying to job:', error);
@@ -258,35 +259,20 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
     return applications.some(app => app.job_id === jobId);
   };
 
-  const getApplicationStatus = (jobId: string) => {
-    const application = applications.find(app => app.job_id === jobId);
-    return application?.status || 'not_applied';
-  };
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center space-y-4">
-          <Briefcase className="h-12 w-12 text-green-500 mx-auto animate-pulse" />
-          <p className="text-lg">Loading jobs...</p>
-        </div>
-      </div>
-    );
+    return <div className="text-center">Loading jobs...</div>;
   }
 
   return (
     <div className="space-y-6">
       {/* Post Job Form (Employers only) */}
       {userRole === 'employer' && (
-        <Card className="border-l-4 border-l-green-500">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Briefcase className="h-5 w-5 text-green-500" />
+              <Briefcase className="h-5 w-5" />
               Post New Job
             </CardTitle>
-            <CardDescription>
-              Share job opportunities with qualified candidates
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -338,7 +324,7 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
                 rows={3}
               />
             </div>
-            <Button onClick={handlePostJob} className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
+            <Button onClick={handlePostJob} className="w-full">
               <Upload className="h-4 w-4 mr-2" />
               Post Job
             </Button>
@@ -346,81 +332,38 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
         </Card>
       )}
 
-      {/* My Applications (Users only) */}
-      {userRole === 'user' && applications.length > 0 && (
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-500" />
-              My Applications
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {applications.map((app) => {
-                const job = jobs.find(j => j.id === app.job_id);
-                if (!job) return null;
-                
-                return (
-                  <div key={app.id} className="p-4 border rounded-lg flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">{job.title}</h4>
-                      <p className="text-sm text-muted-foreground">{job.company}</p>
-                    </div>
-                    <Badge variant={
-                      app.status === 'accepted' ? 'default' :
-                      app.status === 'rejected' ? 'destructive' : 'secondary'
-                    }>
-                      {app.status === 'accepted' && '✅ Accepted'}
-                      {app.status === 'rejected' && '❌ Rejected'}
-                      {app.status === 'applied' && '🟡 Pending'}
-                    </Badge>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Jobs List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {jobs.map((job) => (
-          <Card key={job.id} className="group hover:shadow-xl transition-all duration-300 border-l-4 border-l-green-500 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardHeader className="relative">
+          <Card key={job.id} className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500">
+            <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-xl flex items-center gap-2 group-hover:text-green-600 transition-colors">
-                    <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg">
-                      <Briefcase className="h-4 w-4 text-white" />
-                    </div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Briefcase className="h-5 w-5 text-green-500" />
                     {job.title}
                   </CardTitle>
-                  <CardDescription className="flex items-center gap-4 mt-2 text-base">
-                    <span className="flex items-center gap-1">
-                      <Building className="h-4 w-4" />
-                      {job.company}
-                    </span>
+                  <CardDescription className="flex items-center gap-4 mt-2">
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
                       {job.location}
                     </span>
+                    <span>{job.company}</span>
                   </CardDescription>
                 </div>
                 {job.salary && (
-                  <Badge variant="secondary" className="flex items-center gap-1 bg-green-50 text-green-700">
+                  <Badge variant="secondary" className="flex items-center gap-1">
                     <DollarSign className="h-3 w-3" />
                     {job.salary}
                   </Badge>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="space-y-4 relative">
+            <CardContent className="space-y-4">
               {job.description && (
                 <div>
                   <h4 className="font-medium mb-2">Description</h4>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+                  <p className="text-sm text-muted-foreground line-clamp-3">
                     {job.description}
                   </p>
                 </div>
@@ -433,105 +376,87 @@ const JobsTab = ({ userRole }: { userRole: string }) => {
                 </p>
               </div>
 
-              <div className="pt-4 space-y-3">
-                <Button 
-                  variant="outline" 
-                  className="w-full group-hover:border-green-500 group-hover:text-green-600"
-                >
-                  View Details
-                </Button>
-
-                {userRole === 'user' && (
-                  <div>
-                    {!isApplied(job.id) ? (
+              {userRole === 'user' && (
+                <div className="space-y-3 pt-2 border-t">
+                  {!isApplied(job.id) ? (
+                    <div className="space-y-2">
+                      <Label htmlFor={`cv-${job.id}`}>Upload CV</Label>
+                      <Input
+                        id={`cv-${job.id}`}
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => setApplicationData({
+                          jobId: job.id,
+                          cv: e.target.files?.[0] || null
+                        })}
+                      />
                       <Button 
-                        onClick={() => handleApply(job.id, new File([], 'temp'))}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                        onClick={() => handleApply(job.id)}
+                        disabled={!applicationData.cv || applicationData.jobId !== job.id}
+                        className="w-full"
                       >
                         <FileText className="h-4 w-4 mr-2" />
                         Apply Now
                       </Button>
-                    ) : (
-                      <Badge 
-                        variant={
-                          getApplicationStatus(job.id) === 'accepted' ? 'default' :
-                          getApplicationStatus(job.id) === 'rejected' ? 'destructive' : 'secondary'
-                        }
-                        className="w-full justify-center py-2"
-                      >
-                        {getApplicationStatus(job.id) === 'accepted' && '✅ Application Accepted'}
-                        {getApplicationStatus(job.id) === 'rejected' && '❌ Application Rejected'}
-                        {getApplicationStatus(job.id) === 'applied' && '🟡 Application Pending'}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-
-                {/* Employer Applications Section */}
-                {userRole === 'employer' && job.employer_id === user?.id && (
-                  <div className="pt-4 border-t">
-                    <h4 className="font-medium mb-3">Applications ({applications.filter(app => app.job_id === job.id).length})</h4>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {applications
-                        .filter(app => app.job_id === job.id)
-                        .map((app) => (
-                          <div key={app.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                            <div className="flex items-center gap-3">
-                              <Badge variant={
-                                app.status === 'accepted' ? 'default' :
-                                app.status === 'rejected' ? 'destructive' : 'secondary'
-                              }>
-                                {app.status}
-                              </Badge>
-                              {app.cv_storage_path && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleDownloadCV(app.cv_storage_path!, 'Applicant')}
-                                >
-                                  <Download className="h-3 w-3 mr-1" />
-                                  CV
-                                </Button>
-                              )}
-                            </div>
-                            {app.status === 'applied' && (
-                              <div className="flex gap-1">
-                                <Button
-                                  size="sm"
-                                  onClick={() => updateApplicationStatus(app.id, 'accepted')}
-                                  className="bg-green-500 hover:bg-green-600"
-                                >
-                                  Accept
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => updateApplicationStatus(app.id, 'rejected')}
-                                >
-                                  Reject
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        ))}
                     </div>
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <Badge variant="outline" className="w-full justify-center py-2">
+                      Applied
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              {userRole === 'employer' && job.employer_id === user?.id && (
+                <div className="pt-2 border-t">
+                  <h4 className="font-medium mb-2">Applications</h4>
+                  {applications
+                    .filter(app => app.job_id === job.id)
+                    .map((app) => (
+                      <div key={app.id} className="flex items-center justify-between p-2 border rounded mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={
+                            app.status === 'accepted' ? 'default' :
+                            app.status === 'rejected' ? 'destructive' : 'secondary'
+                          }>
+                            {app.status}
+                          </Badge>
+                          {app.cv_storage_path && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDownloadCV(app.cv_storage_path!, 'Applicant')}
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              CV
+                            </Button>
+                          )}
+                        </div>
+                        {app.status === 'applied' && (
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              onClick={() => updateApplicationStatus(app.id, 'accepted')}
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => updateApplicationStatus(app.id, 'rejected')}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
-
-      {jobs.length === 0 && (
-        <div className="text-center py-12">
-          <Briefcase className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No jobs posted yet</h3>
-          <p className="text-muted-foreground">
-            {userRole === 'employer' ? 'Start by posting your first job opportunity.' : 'Check back later for new opportunities.'}
-          </p>
-        </div>
-      )}
     </div>
   );
 };
