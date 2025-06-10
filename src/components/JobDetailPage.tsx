@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, DollarSign, Building, FileText, Upload, CheckCircle, Briefcase } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Building, FileText, Upload, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Job {
